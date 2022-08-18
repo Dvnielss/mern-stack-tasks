@@ -13,27 +13,6 @@ class App extends Component {
         this.addTask = this.addTask.bind(this);
 
     }
-    addTask(e) {
-        fetch('/api/tasks', {
-            method: 'POST',
-            body: JSON.stringify(this.state),
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-
-        })
-            .then(res => res.json())
-            .then(data => {
-                console.log(data)
-                M.toast({ html: 'Task Saved' });
-                this.setState({ title: '', description: '' });
-            })
-            .catch(err => console.log(err));
-
-        e.preventDefault();
-    }
-
 
 
     handleChange(e) {
@@ -41,6 +20,79 @@ class App extends Component {
         this.setState({
             [name]: value
         });
+    }
+
+    addTask(e) {
+        e.preventDefault();
+        if (this.state._id) {
+            fetch(`/api/tasks/${this.state._id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                    title: this.state.title,
+                    description: this.state.description
+                }),
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    window.M.toast({ html: 'Task Updated' });
+                    this.setState({ _id: '', title: '', description: '' });
+                    this.fetchTasks();
+                });
+        } else {
+            fetch('/api/tasks', {
+                method: 'POST',
+                body: JSON.stringify(this.state),
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    window.M.toast({ html: 'Task Saved' });
+                    this.setState({ title: '', description: '' });
+                    this.fetchTasks();
+                })
+                .catch(err => console.error(err));
+        }
+
+    }
+
+    deleteTask(id) {
+        if (confirm('Are you sure you want to delete it?')) {
+            fetch(`/api/tasks/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    M.toast({ html: 'Task deleted' });
+                    this.fetchTasks();
+                });
+        }
+    }
+
+
+    editTask(id) {
+        fetch(`/api/tasks/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                this.setState({
+                    title: data.title,
+                    description: data.description,
+                    _id: data._id
+                });
+            });
     }
 
     componentDidMount() {
@@ -102,6 +154,17 @@ class App extends Component {
                                                 <tr key={task._id}>
                                                     <td>{task.title}</td>
                                                     <td>{task.description}</td>
+                                                    <td>
+                                                        <button onClick={() => this.editTask(task._id)} className="btn light-blue darken-4" style={{ margin: '4px' }}>
+                                                            <i className="material-icons">edit</i>
+                                                        </button>
+
+                                                        <button className="btn light-blue darken-4" style={{ margin: '4px' }}>
+                                                            <i className="material-icons" onClick={() => this.deleteTask(task._id)}>delete</i>
+                                                        </button>
+
+
+                                                    </td>
                                                 </tr>
                                             )
 
